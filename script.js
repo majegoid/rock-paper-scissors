@@ -1,14 +1,35 @@
-// game result messages
-let winGameMessage = `you won the game`;
-let loseGameMessage = `you lost the game`;
-let drawGameMessage = `neither you or the computer won the game`;
-// round result messages
-let winRoundMessage = `you won the round`;
-let drawRoundMessage = `the round was a draw`;
-let loseRoundMessage = `you lost the round`;
-// participant choices
+// Game result messages
+let winGameMessage = `You won the game.`;
+let loseGameMessage = `You lost the game.`;
+let drawGameMessage = `Neither you nor the computer won the game.`;
+// Round result messages
+let winRoundMessage = `You won the round.`;
+let drawRoundMessage = `The round was a draw.`;
+let loseRoundMessage = `You lost the round.`;
+// Element Querying
+let choosesRockButton = document.querySelector('#chooses-rock');
+let choosesPaperButton = document.querySelector('#chooses-paper');
+let choosesScissorsButton = document.querySelector('#chooses-scissors');
+let playerChoiceButtons = [choosesRockButton, choosesPaperButton, choosesScissorsButton];
+playerChoiceButtons.forEach((playerChoiceButton) => {
+  let playerChoiceText = Array.from(playerChoiceButton.getAttribute('id').split('-')[1]);
+  playerChoiceText.splice(0, 1, playerChoiceText[0].toUpperCase());
+  playerChoiceText = playerChoiceText.join('');
+
+  playerChoiceButton.addEventListener('click', (e) => playRound(playerChoiceText));
+});
+let gameResultsDiv = document.querySelector('#game-results');
+let gameScoreH2 = document.querySelector('#game-score');
+// Global State
+// Participant choices
 let playerChoice = '';
 let computerChoice = '';
+// Player Scores
+let computerScore = 0;
+let playerScore = 0;
+// Game Controls
+let roundsPlayed = 0;
+const ROUNDS_PER_GAME = 5;
 
 function getComputerChoice() {
   let computerChoiceInt = Math.ceil(Math.random() * 3);
@@ -18,74 +39,100 @@ function getComputerChoice() {
 function getComputerChoiceName(choiceInt) {
   switch (choiceInt) {
     case 1:
-      return 'rock';
+      return 'Rock';
     case 2:
-      return 'paper';
+      return 'Paper';
     case 3:
-      return 'scissors';
+      return 'Scissors';
     default:
       throw new Error('Computer choice was not 1, 2, or 3');
   }
 }
 
-function playRound() {
+function resetGameState() {
+  gameResultsDiv.replaceChildren();
+  // Participant choices
   playerChoice = '';
-  computerChoice = getComputerChoice();
-  while (!['rock', 'paper', 'scissors'].includes(playerChoice)) {
-    playerChoice = prompt("Put in 'Rock', 'Paper', or 'Scissors'.");
-    playerChoice = playerChoice.toLowerCase();
+  computerChoice = '';
+  // Player Scores
+  computerScore = 0;
+  playerScore = 0;
+  // Game Controls
+  roundsPlayed = 0;
+}
+
+function playRound(playerChoiceParam) {
+  if (roundsPlayed === ROUNDS_PER_GAME) {
+    resetGameState();
   }
+  playerChoice = playerChoiceParam;
+  computerChoice = getComputerChoice();
+
   // determine who wins
   // draw scenarios
+  let roundResult = '';
   if (playerChoice === computerChoice) {
-    return drawRoundMessage;
+    roundResult = drawRoundMessage;
   }
   // player win scenarios
   if (
-    (playerChoice === 'rock' && computerChoice === 'scissors') ||
-    (playerChoice === 'paper' && computerChoice === 'rock') ||
-    (playerChoice === 'scissors' && computerChoice === 'paper')
+    (playerChoice === 'Rock' && computerChoice === 'Scissors') ||
+    (playerChoice === 'Paper' && computerChoice === 'Rock') ||
+    (playerChoice === 'Scissors' && computerChoice === 'Paper')
   ) {
-    return winRoundMessage;
+    roundResult = winRoundMessage;
   }
   // computer win scenarios
   if (
-    (computerChoice === 'rock' && playerChoice === 'scissors') ||
-    (computerChoice === 'paper' && playerChoice === 'rock') ||
-    (computerChoice === 'scissors' && playerChoice === 'paper')
+    (computerChoice === 'Rock' && playerChoice === 'Scissors') ||
+    (computerChoice === 'Paper' && playerChoice === 'Rock') ||
+    (computerChoice === 'Scissors' && playerChoice === 'Paper')
   ) {
-    return loseRoundMessage;
+    roundResult = loseRoundMessage;
+  }
+  // round completed, display result and check if game has ended
+  roundsPlayed += 1;
+  displayRoundResult(roundResult);
+  if (roundsPlayed === ROUNDS_PER_GAME) {
+    displayGameResult();
   }
 }
 
-function game() {
-  let computerScore = 0;
-  let playerScore = 0;
-
-  for (let i = 0; i < 5; i++) {
-    let roundResult = playRound();
-
-    console.log(`you chose: ${playerChoice}`);
-    console.log(`computer chose: ${computerChoice}`);
-    if (roundResult === winRoundMessage) {
-      playerScore += 1;
-    }
-    if (roundResult === loseRoundMessage) {
-      computerScore += 1;
-    }
-    console.log(roundResult, `current score is: ${playerScore}-${computerScore}`);
-  }
+function displayGameResult() {
   if (playerScore > computerScore) {
-    console.log(winGameMessage);
+    displayTextOnNewLine(winGameMessage);
   }
   if (computerScore > playerScore) {
-    console.log(loseGameMessage);
+    displayTextOnNewLine(loseGameMessage);
   }
   if (playerScore === computerScore) {
-    console.log(drawGameMessage);
+    displayTextOnNewLine(drawGameMessage);
   }
 }
 
-window.onload = () => {
-  setTimeout(game, 3000);
-};
+function displayRoundResult(roundResult) {
+  if (roundResult === winRoundMessage) {
+    playerScore += 1;
+  }
+  if (roundResult === loseRoundMessage) {
+    computerScore += 1;
+  }
+  displayTextOnNewLine(
+    `[Round ${roundsPlayed}/${ROUNDS_PER_GAME}]: You chose: ${playerChoice}, Computer chose: ${computerChoice}.`
+  );
+  displayTextOnNewLine(`${roundResult}`);
+  displayCurrentScore();
+}
+
+function displayCurrentScore() {
+  gameScoreH2.textContent = `${playerScore}-${computerScore}`;
+}
+
+function displayTextOnNewLine(text) {
+  gameResultsDiv.appendChild(document.createTextNode(text));
+  gameResultsDiv.appendChild(document.createElement('br'));
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  console.log('game ready');
+});
